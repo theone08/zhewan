@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>工作流程记录仪</title>
+<meta name="description" content="记录和管理工件操作流程">
+<meta name="theme-color" content="#1a1410">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="流程记录">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Variables ── */
+:root {
+  --ink: #1a1410;
+  --paper: #faf8f3;
+  --cream: #f2ede3;
+  --amber: #c8860a;
+  --amber-pale: #fef9ec;
+  --red: #c0392b;
+  --green: #27654a;
+  --gray: #8a8070;
+  --gray-light: #d8d0c0;
+  --border: #ddd5c0;
+  --shadow: rgba(26,20,16,0.12);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'Noto Sans SC', sans-serif; background: var(--paper); color: var(--ink); overscroll-behavior: none; }
+
+/* ── Install Banner ── */
+#install-banner {
+  display: none;
+  position: fixed;
+  bottom: calc(1rem + var(--safe-bottom));
+  left: 1rem; right: 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  z-index: 9999;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border-left: 4px solid var(--amber);
+  align-items: center;
+  gap: 1rem;
+}
+#install-banner.show { display: flex; }
+.install-text strong { display: block; font-size: 0.88rem; margin-bottom: 0.15rem; }
+.install-text span { font-size: 0.75rem; color: var(--gray-light); }
+.install-btn { background: var(--amber); color: white; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.install-dismiss { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 1rem; padding: 4px; flex-shrink: 0; }
+
+/* ── Header ── */
+header {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0 1rem;
+  padding-top: var(--safe-top);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: calc(56px + var(--safe-top));
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  border-bottom: 3px solid var(--amber);
+}
+.logo { font-family: 'Noto Serif SC', serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem; }
+.logo-icon { width: 26px; height: 26px; background: var(--amber); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+.header-actions { display: flex; gap: 0.4rem; align-items: center; }
+.header-menu-btn { display: none; background: none; border: none; color: var(--paper); font-size: 1.3rem; cursor: pointer; padding: 4px 8px; line-height: 1; }
+
+/* ── Layout ── */
+.app-wrap { display: flex; height: 100vh; padding-top: calc(56px + var(--safe-top)); }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--cream);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+.sidebar-header { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.sidebar-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); }
+
+/* ── Search ── */
+.search-box { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.search-input-wrap { position: relative; display: flex; align-items: center; }
+.search-icon { position: absolute; left: 0.6rem; font-size: 0.82rem; pointer-events: none; }
+.search-box input {
+  width: 100%;
+  padding: 0.5rem 1.8rem 0.5rem 2rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-box input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(200,134,10,0.1); }
+.search-box input::placeholder { color: var(--gray-light); }
+.search-clear { position: absolute; right: 0.4rem; background: none; border: none; color: var(--gray-light); cursor: pointer; font-size: 0.8rem; padding: 3px 5px; display: none; border-radius: 3px; line-height: 1; }
+.search-clear:hover { color: var(--red); }
+.search-clear.visible { display: block; }
+.search-filters { display: flex; gap: 0.3rem; margin-top: 0.45rem; }
+.filter-chip { padding: 2px 9px; border-radius: 100px; border: 1px solid var(--border); background: white; font-family: inherit; font-size: 0.68rem; cursor: pointer; color: var(--gray); transition: all 0.15s; white-space: nowrap; }
+.filter-chip:hover { border-color: var(--amber); color: var(--amber); }
+.filter-chip.active { background: var(--amber); border-color: var(--amber); color: white; }
+
+/* ── Search Results Panel ── */
+#search-results-panel { display: none; flex-shrink: 0; border-bottom: 2px solid var(--amber); background: var(--amber-pale); max-height: 55%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.search-result-header { padding: 0.45rem 1rem; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); border-bottom: 1px solid rgba(200,134,10,0.2); }
+.search-result-item { padding: 0.6rem 1rem; cursor: pointer; border-bottom: 1px solid rgba(200,134,10,0.15); transition: background 0.12s; }
+.search-result-item:hover { background: rgba(200,134,10,0.1); }
+.search-result-item:last-child { border-bottom: none; }
+.search-result-name { font-size: 0.86rem; font-weight: 600; margin-bottom: 0.2rem; }
+.search-result-snippet { font-size: 0.73rem; color: var(--gray); line-height: 1.5; }
+.search-result-where { display: inline-block; font-size: 0.63rem; background: var(--amber); color: white; border-radius: 3px; padding: 0 5px; margin-right: 3px; margin-bottom: 2px; }
+mark { background: #ffe066; color: var(--ink); border-radius: 2px; padding: 0 1px; font-style: normal; }
+
+/* ── Process List ── */
+.process-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0.4rem 0; }
+.process-item { padding: 0.75rem 1rem; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; position: relative; }
+.process-item:hover { background: rgba(200,134,10,0.06); }
+.process-item.active { background: var(--amber-pale); border-left-color: var(--amber); }
+.process-item-name { font-size: 0.87rem; font-weight: 500; margin-bottom: 0.18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 26px; }
+.process-item-meta { font-size: 0.7rem; color: var(--gray); display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.process-item .del-btn { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--gray-light); font-size: 0.82rem; padding: 4px 5px; border-radius: 3px; transition: all 0.15s; }
+.process-item .del-btn:hover { color: var(--red); background: rgba(192,57,43,0.1); }
+@media (hover: none) { .process-item .del-btn { color: var(--gray-light); } }
+.empty-state { padding: 2.5rem 1rem; text-align: center; color: var(--gray); font-size: 0.82rem; line-height: 1.9; }
+
+/* ── Main ── */
+.main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.4rem; padding-bottom: calc(1.5rem + var(--safe-bottom)); height: 100%; }
+
+/* ── Welcome ── */
+.welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gray); text-align: center; gap: 0.8rem; min-height: 50vh; }
+.welcome-icon { font-size: 3rem; opacity: 0.35; }
+.welcome h2 { font-family: 'Noto Serif SC', serif; font-size: 1.2rem; color: var(--ink); opacity: 0.55; }
+.welcome p { font-size: 0.83rem; line-height: 1.7; max-width: 260px; }
+
+/* ── Editor ── */
+.process-editor { display: flex; flex-direction: column; gap: 1.2rem; max-width: 760px; width: 100%; }
+.editor-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.8rem; }
+.editor-title-wrap { flex: 1; min-width: 0; }
+.editor-title { width: 100%; font-family: 'Noto Serif SC', serif; font-size: 1.3rem; font-weight: 700; color: var(--ink); border: none; border-bottom: 2px solid var(--border); background: transparent; padding: 0.3rem 0; outline: none; transition: border-color 0.2s; }
+.editor-title:focus { border-bottom-color: var(--amber); }
+.editor-title::placeholder { color: var(--gray-light); font-weight: 400; font-family: 'Noto Sans SC', sans-serif; }
+.editor-meta { margin-top: 0.45rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.tag-input-wrap { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+.tag { background: var(--amber); color: white; padding: 1px 8px; border-radius: 100px; font-size: 0.68rem; font-weight: 500; display: inline-flex; align-items: center; gap: 3px; }
+.tag button { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.7); font-size: 0.75rem; line-height: 1; padding: 0; }
+.tag-input { border: none; background: transparent; font-family: inherit; font-size: 0.73rem; color: var(--ink); outline: none; width: 80px; min-width: 50px; }
+
+/* ── Section Label ── */
+.section-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); margin-bottom: 0.45rem; }
+
+/* ── Description ── */
+.desc-area { width: 100%; min-height: 60px; border: 1px solid var(--border); border-radius: 6px; padding: 0.7rem; font-family: inherit; font-size: 0.86rem; color: var(--ink); background: white; resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6; -webkit-appearance: none; }
+.desc-area:focus { border-color: var(--amber); }
+.desc-area::placeholder { color: var(--gray-light); }
+
+/* ── Status Badge ── */
+.status-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 2px 10px; border-radius: 100px; font-size: 0.7rem; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+.status-draft { background: var(--cream); color: var(--gray); }
+.status-active { background: rgba(39,101,74,0.12); color: var(--green); }
+.status-archived { background: rgba(192,57,43,0.1); color: var(--red); }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.42rem 0.85rem; border-radius: 5px; font-family: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; touch-action: manipulation; -webkit-appearance: none; line-height: 1.4; }
+.btn-primary { background: var(--amber); color: white; }
+.btn-primary:hover { background: #b07508; }
+.btn-secondary { background: var(--cream); color: var(--ink); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-sm { padding: 0.3rem 0.65rem; font-size: 0.76rem; }
+
+/* ── Steps ── */
+.steps-section { display: flex; flex-direction: column; gap: 0.45rem; }
+.steps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.1rem; }
+.step-card { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; display: flex; gap: 0.75rem; align-items: flex-start; transition: border-color 0.2s, box-shadow 0.2s; }
+.step-card:hover { border-color: #c8a050; box-shadow: 0 2px 8px var(--shadow); }
+.step-num-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.step-num { width: 28px; height: 28px; background: var(--ink); color: var(--paper); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 500; flex-shrink: 0; }
+.step-connector { width: 2px; flex: 1; background: var(--border); min-height: 14px; margin-top: 4px; }
+.step-body { flex: 1; display: flex; flex-direction: column; gap: 0.38rem; min-width: 0; }
+.step-title-input { border: none; background: transparent; font-family: inherit; font-size: 0.91rem; font-weight: 600; color: var(--ink); width: 100%; outline: none; padding: 0; -webkit-appearance: none; }
+.step-title-input::placeholder { color: var(--gray-light); font-weight: 400; }
+.step-desc-input { border: none; background: transparent; font-family: inherit; font-size: 0.82rem; color: var(--gray); width: 100%; outline: none; padding: 0; resize: none; min-height: 20px; line-height: 1.5; -webkit-appearance: none; }
+.step-desc-input::placeholder { color: var(--gray-light); }
+.step-footer { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.15rem; flex-wrap: wrap; }
+.step-type-select { font-family: inherit; font-size: 0.7rem; border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; background: var(--cream); color: var(--gray); cursor: pointer; outline: none; -webkit-appearance: none; }
+.step-actions { display: flex; gap: 0.25rem; margin-left: auto; }
+.step-btn { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 3px 7px; cursor: pointer; font-size: 0.72rem; color: var(--gray); transition: all 0.15s; touch-action: manipulation; font-family: inherit; }
+.step-btn:hover { background: var(--cream); color: var(--ink); }
+.step-btn.danger:hover { background: rgba(192,57,43,0.08); color: var(--red); border-color: var(--red); }
+.add-step-btn { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 2px dashed var(--border); border-radius: 8px; background: none; cursor: pointer; font-family: inherit; font-size: 0.83rem; color: var(--gray); width: 100%; transition: all 0.2s; touch-action: manipulation; margin-top: 0.2rem; }
+.add-step-btn:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-pale); }
+
+/* ── Images ── */
+.img-upload-zone { border: 2px dashed var(--border); border-radius: 6px; padding: 0.65rem 1rem; display: flex; align-items: center; gap: 0.6rem; cursor: pointer; transition: all 0.2s; background: var(--cream); font-size: 0.78rem; color: var(--gray); user-select: none; margin-top: 0.45rem; }
+.img-upload-zone:hover { border-color: var(--amber); background: var(--amber-pale); color: var(--amber); }
+.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; margin-top: 0.45rem; }
+.img-thumb { position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); background: var(--cream); aspect-ratio: 4/3; cursor: pointer; }
+.img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.img-thumb .img-del { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.55); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; line-height: 1; }
+.img-thumb:hover .img-del { opacity: 1; }
+@media (hover: none) { .img-thumb .img-del { opacity: 0.85; } }
+
+/* ── View Mode ── */
+.view-steps { display: flex; flex-direction: column; }
+.view-step { display: flex; gap: 1rem; padding: 0.85rem 0; border-bottom: 1px solid var(--border); }
+.view-step:last-child { border-bottom: none; }
+.view-step-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.view-step-num { width: 30px; height: 30px; background: var(--ink); color: var(--paper); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; }
+.view-step-connector { width: 2px; flex: 1; background: var(--border); min-height: 14px; margin-top: 4px; }
+.view-step:last-child .view-step-connector { display: none; }
+.view-step-body { flex: 1; padding-top: 4px; min-width: 0; }
+.view-step-title { font-size: 0.91rem; font-weight: 600; margin-bottom: 0.2rem; }
+.view-step-desc { font-size: 0.82rem; color: var(--gray); line-height: 1.6; word-break: break-word; }
+.view-step-type { display: inline-block; background: var(--cream); border: 1px solid var(--border); border-radius: 3px; font-size: 0.67rem; padding: 0 5px; color: var(--gray); margin-top: 0.25rem; }
+
+/* ── Lightbox ── */
+#lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9000; align-items: center; justify-content: center; padding: 1rem; }
+#lightbox.open { display: flex; }
+#lightbox img { max-width: 100%; max-height: 90vh; object-fit: contain; border-radius: 6px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+#lightbox-close { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.15); border: none; border-radius: 50%; width: 38px; height: 38px; color: white; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#lightbox-close:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Notification ── */
+.notif { position: fixed; top: calc(66px + var(--safe-top)); left: 50%; transform: translateX(-50%) translateY(-8px); background: var(--ink); color: var(--paper); padding: 0.55rem 1.1rem; border-radius: 20px; font-size: 0.8rem; border-left: 3px solid var(--amber); opacity: 0; transition: all 0.22s; z-index: 9998; pointer-events: none; white-space: nowrap; }
+.notif.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .app-wrap { flex-direction: column; }
+  .sidebar { position: fixed; top: calc(56px + var(--safe-top)); left: 0; bottom: calc(52px + var(--safe-bottom)); width: 100%; min-width: unset; border-right: none; z-index: 50; transform: translateX(-100%); transition: transform 0.25s ease; }
+  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
+  .main { padding-bottom: calc(64px + var(--safe-bottom)); }
+  .header-menu-btn { display: flex; }
+  .header-actions .hide-mobile { display: none; }
+  .mobile-nav { display: flex !important; }
+  .editor-header { flex-wrap: wrap; }
+}
+@media (min-width: 641px) {
+  .mobile-nav { display: none !important; }
+}
+
+/* ── Mobile Nav ── */
+.mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: calc(52px + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--ink); border-top: 1px solid rgba(255,255,255,0.08); z-index: 200; }
+.mobile-nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: none; border: none; color: var(--gray); font-family: inherit; font-size: 0.58rem; cursor: pointer; }
+.mobile-nav-btn span { font-size: 1.1rem; }
+.mobile-nav-btn.active { color: var(--amber); }
+
+/* ── Print ── */
+@media print {
+  .sidebar, header, .mobile-nav, #install-banner, .step-actions, .add-step-btn, .img-upload-zone, .editor-actions { display: none !important; }
+  .app-wrap { display: block; padding-top: 0; }
+  .main { overflow: visible; height: auto; padding: 1rem; }
+  .step-card { break-inside: avoid; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Install Banner -->
+<div id="install-banner">
+  <div class="install-text" style="flex:1">
+    <strong>📲 安装到主屏幕</strong>
+    <span>像原生 App 一样使用，支持离线访问</span>
+  </div>
+  <button class="install-btn" id="install-btn">安装</button>
+  <button class="install-dismiss" id="install-dismiss">✕</button>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">📋</div>
+    工作流程记录仪
+  </div>
+  <div class="header-actions">
+    <button class="header-menu-btn" id="menu-btn" aria-label="菜单">☰</button>
+    <button class="btn btn-secondary btn-sm hide-mobile" id="btn-export">📤 导出</button>
+    <button class="btn btn-secondary btn-sm hide-mobile" id="btn-import">📥 导入</button>
+    <button class="btn btn-primary btn-sm" id="btn-new">＋ 新建</button>
+  </div>
+</header>
+
+<!-- App Wrap -->
+<div class="app-wrap">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">我的流程</span>
+      <span id="process-count" style="font-size:0.7rem;color:var(--gray)">0 个</span>
+    </div>
+    <div class="search-box">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="搜索型号、名称、步骤…" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="search-clear" id="search-clear" title="清除">✕</button>
+      </div>
+      <div class="search-filters">
+        <button class="filter-chip active" data-f="all">全部</button>
+        <button class="filter-chip" data-f="active">启用中</button>
+        <button class="filter-chip" data-f="draft">草稿</button>
+        <button class="filter-chip" data-f="archived">归档</button>
+      </div>
+    </div>
+    <div id="search-results-panel">
+      <div id="search-results-list"></div>
+    </div>
+    <div class="process-list" id="process-list">
+      <div class="empty-state">还没有流程<br>点击「新建」开始</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main" id="main-content">
+    <div class="welcome">
+      <div class="welcome-icon">📝</div>
+      <h2>开始记录工件操作流程</h2>
+      <p>按型号分类记录每个工件的操作步骤，随时搜索查阅。</p>
+      <button class="btn btn-primary" id="btn-new-welcome" style="margin-top:0.6rem">＋ 新建第一个流程</button>
+    </div>
+  </main>
+
+</div>
+
+<!-- Mobile Bottom Nav -->
+<nav class="mobile-nav" id="mobile-nav">
+  <button class="mobile-nav-btn" id="nav-list"><span>☰</span>列表</button>
+  <button class="mobile-nav-btn active" id="nav-main"><span>📝</span>编辑</button>
+  <button class="mobile-nav-btn" id="nav-new"><span>＋</span>新建</button>
+  <button class="mobile-nav-btn" id="nav-export"><span>📤</span>导出</button>
+</nav>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <button id="lightbox-close">✕</button>
+  <img id="lightbox-img" src="" alt="图片预览">
+</div>
+
+<!-- Hidden inputs -->
+<div class="notif" id="notif"></div>
+<input type="file" id="file-import" accept=".json" style="display:none">
+<input type="file" id="file-img" accept="image/*" multiple style="display:none">
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let processes = [];
+let currentId = null;
+let viewMode = false;
+let filterStatus = 'all';
+let deferredInstall = null;
+let imgUploadTarget = null; // { scope:'cover'|'step', stepIdx:number }
+
+try { processes = JSON.parse(localStorage.getItem('wf_v2') || '[]'); } catch(_) { processes = []; }
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function save() {
+  try { localStorage.setItem('wf_v2', JSON.stringify(processes)); } catch(e) { notify('⚠ 存储空间不足，请导出备份'); }
+}
+function getProc(id) { return processes.find(p => p.id === id); }
+function statusLabel(s) { return {draft:'草稿', active:'启用', archived:'归档'}[s] || '草稿'; }
+function statusIcon(s) { return {draft:'○', active:'●', archived:'▲'}[s] || '○'; }
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+let _notifTimer;
+function notify(msg) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_notifTimer);
+  _notifTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ═══════════════════════════════════════════════
+// PWA
+// ═══════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  if (!localStorage.getItem('wf_install_dismissed')) {
+    setTimeout(() => document.getElementById('install-banner').classList.add('show'), 3000);
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('show');
+  notify('✓ App 已安装到主屏幕');
+});
+
+document.getElementById('install-btn').onclick = () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  deferredInstall.userChoice.then(r => {
+    deferredInstall = null;
+    document.getElementById('install-banner').classList.remove('show');
+    if (r.outcome === 'accepted') notify('✓ 已添加到主屏幕');
+  });
+};
+
+document.getElementById('install-dismiss').onclick = () => {
+  document.getElementById('install-banner').classList.remove('show');
+  localStorage.setItem('wf_install_dismissed', '1');
+};
+
+// ═══════════════════════════════════════════════
+// MOBILE NAV
+// ═══════════════════════════════════════════════
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('menu-btn').textContent = '✕';
+  document.getElementById('nav-list').classList.add('active');
+  document.getElementById('nav-main').classList.remove('active');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('menu-btn').textContent = '☰';
+  document.getElementById('nav-list').classList.remove('active');
+  document.getElementById('nav-main').classList.add('active');
+}
+function toggleSidebar() {
+  const isOpen = document.getElementById('sidebar').classList.contains('open');
+  if (isOpen) closeSidebar(); else openSidebar();
+}
+
+document.getElementById('menu-btn').onclick = toggleSidebar;
+document.getElementById('nav-list').onclick = openSidebar;
+document.getElementById('nav-main').onclick = closeSidebar;
+document.getElementById('nav-new').onclick = () => { createProcess(); };
+document.getElementById('nav-export').onclick = exportJSON;
+
+document.getElementById('main-content').addEventListener('click', () => {
+  if (window.innerWidth <= 640) closeSidebar();
+});
+
+// ═══════════════════════════════════════════════
+// HEADER BUTTONS
+// ═══════════════════════════════════════════════
+document.getElementById('btn-new').onclick = createProcess;
+document.getElementById('btn-new-welcome') && (document.getElementById('btn-new-welcome').onclick = createProcess);
+document.getElementById('btn-export').onclick = exportJSON;
+document.getElementById('btn-import').onclick = () => document.getElementById('file-import').click();
+
+// ═══════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════
+document.getElementById('search-input').addEventListener('input', function() {
+  const val = this.value;
+  document.getElementById('search-clear').classList.toggle('visible', val.length > 0);
+  renderSidebar(val);
+});
+
+document.getElementById('search-clear').onclick = () => {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').classList.remove('visible');
+  renderSidebar('');
+  document.getElementById('search-input').focus();
+};
+
+document.querySelectorAll('.filter-chip').forEach(btn => {
+  btn.onclick = function() {
+    filterStatus = this.dataset.f;
+    document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    renderSidebar(document.getElementById('search-input').value);
+  };
+});
+
+function highlight(text, q) {
+  if (!q) return text;
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  return text.replace(re, m => '<mark>' + m + '</mark>');
+}
+
+function truncateAround(str, q, maxLen) {
+  if (!str) return '';
+  const idx = str.toLowerCase().indexOf(q.toLowerCase());
+  let s = str;
+  if (idx > 15) s = '…' + str.slice(Math.max(0, idx - 10));
+  if (s.length > maxLen) s = s.slice(0, maxLen) + '…';
+  return s;
+}
+
+function renderSidebar(query) {
+  const q = (query || '').trim().toLowerCase();
+  const list = document.getElementById('process-list');
+  const panel = document.getElementById('search-results-panel');
+  const resultList = document.getElementById('search-results-list');
+  document.getElementById('process-count').textContent = processes.length + ' 个';
+
+  // Apply status filter
+  let base = filterStatus === 'all' ? processes : processes.filter(p => p.status === filterStatus);
+
+  // Apply text filter
+  const filtered = q ? base.filter(p => {
+    const inName = (p.name||'').toLowerCase().includes(q);
+    const inDesc = (p.description||'').toLowerCase().includes(q);
+    const inTags = (p.tags||[]).some(t => t.toLowerCase().includes(q));
+    const inSteps = (p.steps||[]).some(s =>
+      (s.title||'').toLowerCase().includes(q) || (s.desc||'').toLowerCase().includes(q)
+    );
+    return inName || inDesc || inTags || inSteps;
+  }) : base;
+
+  // Show/hide search panel
+  if (q) {
+    panel.style.display = '';
+    list.style.display = 'none';
+    if (filtered.length === 0) {
+      resultList.innerHTML = `<div style="padding:1.2rem;text-align:center;font-size:0.8rem;color:var(--gray)">没有找到「${esc(q)}」相关流程</div>`;
+    } else {
+      resultList.innerHTML = `<div class="search-result-header">找到 ${filtered.length} 个结果</div>` +
+        filtered.map(p => {
+          const inName = (p.name||'').toLowerCase().includes(q);
+          const inTags = (p.tags||[]).some(t => t.toLowerCase().includes(q));
+          const inDesc = (p.description||'').toLowerCase().includes(q);
+          const matchedSteps = (p.steps||[]).filter(s =>
+            (s.title||'').toLowerCase().includes(q) || (s.desc||'').toLowerCase().includes(q)
+          );
+          let badges = '';
+          if (inName) badges += '<span class="search-result-where">型号/名称</span>';
+          if (inTags) badges += '<span class="search-result-where">标签</span>';
+          if (inDesc) badges += '<span class="search-result-where">说明</span>';
+          if (matchedSteps.length) badges += `<span class="search-result-where">步骤×${matchedSteps.length}</span>`;
+          let snippet = '';
+          if (matchedSteps.length > 0) {
+            const s = matchedSteps[0];
+            const raw = (s.title ? s.title + '：' : '') + (s.desc || '');
+            snippet = highlight(esc(truncateAround(raw, q, 55)), q);
+          } else if (inDesc && p.description) {
+            snippet = highlight(esc(truncateAround(p.description, q, 55)), q);
+          }
+          return `<div class="search-result-item" data-id="${p.id}">
+            <div class="search-result-name">${highlight(esc(p.name || '未命名流程'), q)}</div>
+            <div class="search-result-snippet">${badges} ${snippet}</div>
+          </div>`;
+        }).join('');
+      // Attach click events
+      resultList.querySelectorAll('.search-result-item').forEach(el => {
+        el.onclick = () => { openProcess(el.dataset.id); closeSidebar(); };
+      });
+    }
+  } else {
+    panel.style.display = 'none';
+    list.style.display = '';
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state">暂无${filterStatus !== 'all' ? '「' + statusLabel(filterStatus) + '」' : ''}流程</div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(p => `
+      <div class="process-item ${p.id === currentId ? 'active' : ''}" data-id="${p.id}">
+        <div class="process-item-name">${esc(p.name || '未命名流程')}</div>
+        <div class="process-item-meta">
+          <span>${statusLabel(p.status)}</span>
+          <span>${(p.steps||[]).length} 步骤</span>
+          <span>${fmtDate(p.updatedAt)}</span>
+        </div>
+        <button class="del-btn" data-del="${p.id}" title="删除">✕</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('.process-item').forEach(el => {
+      el.onclick = (e) => {
+        if (e.target.classList.contains('del-btn')) return;
+        openProcess(el.dataset.id);
+        if (window.innerWidth <= 640) closeSidebar();
+      };
+    });
+    list.querySelectorAll('.del-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        deleteProcess(btn.dataset.del);
+      };
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CRUD
+// ═══════════════════════════════════════════════
+function createProcess() {
+  const p = {
+    id: 'p' + Date.now(),
+    name: '', description: '',
+    tags: [], status: 'draft',
+    steps: [], images: [],
+    createdAt: Date.now(), updatedAt: Date.now()
+  };
+  processes.unshift(p);
+  save();
+  openProcess(p.id);
+  if (window.innerWidth <= 640) closeSidebar();
+}
+
+function openProcess(id) {
+  currentId = id;
+  viewMode = false;
+  renderSidebar(document.getElementById('search-input').value);
+  renderEditor();
+}
+
+function deleteProcess(id) {
+  if (!confirm('确定删除此流程吗？')) return;
+  processes = processes.filter(p => p.id !== id);
+  if (currentId === id) {
+    currentId = null;
+    showWelcome();
+  }
+  save();
+  renderSidebar(document.getElementById('search-input').value);
+  notify('已删除');
+}
+
+function showWelcome() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="welcome">
+      <div class="welcome-icon">📝</div>
+      <h2>开始记录工件操作流程</h2>
+      <p>按型号分类记录每个工件的操作步骤，随时搜索查阅。</p>
+      <button class="btn btn-primary" onclick="createProcess()" style="margin-top:0.6rem">＋ 新建第一个流程</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// EDITOR
+// ═══════════════════════════════════════════════
+function renderEditor() {
+  const p = getProc(currentId);
+  if (!p) return;
+  if (viewMode) { renderViewMode(p); return; }
+
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="process-editor">
+      <div class="editor-header">
+        <div class="editor-title-wrap">
+          <input class="editor-title" id="ed-title" type="text" placeholder="输入工件型号或流程名称…" value="${esc(p.name)}">
+          <div class="editor-meta">
+            <button class="status-badge status-${p.status}" id="ed-status">${statusIcon(p.status)} ${statusLabel(p.status)}</button>
+            <div class="tag-input-wrap" id="ed-tags"></div>
+          </div>
+        </div>
+        <div class="editor-actions" style="display:flex;gap:0.4rem;flex-shrink:0;margin-top:0.2rem">
+          <button class="btn btn-secondary btn-sm" id="ed-preview">👁 预览</button>
+          <button class="btn btn-primary btn-sm" id="ed-save">✓ 保存</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">流程说明</div>
+        <textarea class="desc-area" id="ed-desc" placeholder="描述此流程的目的、适用场景、注意事项…">${esc(p.description||'')}</textarea>
+        <div class="img-upload-zone" id="cover-upload-zone">🖼 点击添加流程图片</div>
+        <div class="img-grid" id="cover-img-grid"></div>
+      </div>
+
+      <div class="steps-section">
+        <div class="steps-header">
+          <div class="section-label" id="steps-label">操作步骤（${(p.steps||[]).length}）</div>
+        </div>
+        <div id="steps-container"></div>
+        <button class="add-step-btn" id="add-step-btn">＋ 添加步骤</button>
+      </div>
+    </div>
+  `;
+
+  // Bind editor events
+  const titleEl = document.getElementById('ed-title');
+  titleEl.oninput = () => { p.name = titleEl.value; p.updatedAt = Date.now(); };
+  titleEl.focus();
+
+  const descEl = document.getElementById('ed-desc');
+  descEl.oninput = () => { p.description = descEl.value; p.updatedAt = Date.now(); autoResize(descEl); };
+  autoResize(descEl);
+
+  document.getElementById('ed-status').onclick = () => {
+    const states = ['draft','active','archived'];
+    p.status = states[(states.indexOf(p.status)+1) % states.length];
+    p.updatedAt = Date.now();
+    const btn = document.getElementById('ed-status');
+    if (btn) { btn.className = 'status-badge status-'+p.status; btn.textContent = statusIcon(p.status)+' '+statusLabel(p.status); }
+    renderSidebar(document.getElementById('search-input').value);
+  };
+
+  document.getElementById('ed-preview').onclick = () => { syncStepTextareas(p); viewMode = true; renderEditor(); };
+  document.getElementById('ed-save').onclick = saveProcess;
+  document.getElementById('add-step-btn').onclick = addStep;
+
+  // Cover image upload
+  document.getElementById('cover-upload-zone').onclick = () => {
+    imgUploadTarget = { scope: 'cover', stepIdx: -1 };
+    document.getElementById('file-img').click();
+  };
+
+  renderTags(p);
+  renderSteps(p);
+  renderCoverImgs(p);
+}
+
+function renderTags(p) {
+  const wrap = document.getElementById('ed-tags');
+  if (!wrap) return;
+  wrap.innerHTML = (p.tags||[]).map((t,i) =>
+    `<span class="tag">${esc(t)}<button data-ti="${i}">✕</button></span>`
+  ).join('') + `<input class="tag-input" placeholder="添加标签…" id="tag-inp">`;
+  wrap.querySelectorAll('.tag button').forEach(btn => {
+    btn.onclick = () => { p.tags.splice(+btn.dataset.ti, 1); p.updatedAt = Date.now(); renderTags(p); };
+  });
+  const tagInp = document.getElementById('tag-inp');
+  tagInp.onkeydown = e => {
+    if (e.key !== 'Enter' && e.key !== ',') return;
+    e.preventDefault();
+    const v = tagInp.value.trim().replace(/,/g,'');
+    if (!v) return;
+    if (!p.tags) p.tags = [];
+    if (!p.tags.includes(v)) p.tags.push(v);
+    tagInp.value = '';
+    p.updatedAt = Date.now();
+    renderTags(p);
+  };
+}
+
+function renderSteps(p) {
+  const container = document.getElementById('steps-container');
+  const label = document.getElementById('steps-label');
+  if (!container) return;
+  if (label) label.textContent = `操作步骤（${(p.steps||[]).length}）`;
+
+  container.innerHTML = (p.steps||[]).map((s, i) => {
+    const isLast = i === p.steps.length - 1;
+    return `
+      <div class="step-card" data-si="${i}">
+        <div class="step-num-col">
+          <div class="step-num">${i+1}</div>
+          ${!isLast ? '<div class="step-connector"></div>' : ''}
+        </div>
+        <div class="step-body">
+          <input class="step-title-input" type="text" placeholder="步骤名称…" value="${esc(s.title||'')}" data-si="${i}" data-field="title">
+          <textarea class="step-desc-input" placeholder="详细描述（操作方法、注意事项…）" data-si="${i}" data-field="desc" rows="1">${esc(s.desc||'')}</textarea>
+          <div class="step-footer">
+            <select class="step-type-select" data-si="${i}">
+              ${['操作','判断','等待','检查','备注'].map(t => `<option ${s.type===t?'selected':''}>${t}</option>`).join('')}
+            </select>
+            <button class="step-btn" data-img-si="${i}" title="添加图片">🖼 图片</button>
+            <div class="step-actions">
+              ${i > 0 ? `<button class="step-btn" data-move="${i}" data-dir="-1">↑</button>` : ''}
+              ${!isLast ? `<button class="step-btn" data-move="${i}" data-dir="1">↓</button>` : ''}
+              <button class="step-btn danger" data-del-step="${i}">✕</button>
+            </div>
+          </div>
+          <div class="img-grid" id="step-img-grid-${i}"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Bind step events
+  container.querySelectorAll('.step-title-input').forEach(el => {
+    el.oninput = () => { p.steps[+el.dataset.si].title = el.value; p.updatedAt = Date.now(); };
+  });
+  container.querySelectorAll('.step-desc-input').forEach(el => {
+    autoResize(el);
+    el.oninput = () => { p.steps[+el.dataset.si].desc = el.value; p.updatedAt = Date.now(); autoResize(el); };
+  });
+  container.querySelectorAll('.step-type-select').forEach(el => {
+    el.onchange = () => { p.steps[+el.dataset.si].type = el.value; p.updatedAt = Date.now(); };
+  });
+  container.querySelectorAll('[data-img-si]').forEach(btn => {
+    btn.onclick = () => {
+      imgUploadTarget = { scope: 'step', stepIdx: +btn.dataset.imgSi };
+      document.getElementById('file-img').click();
+    };
+  });
+  container.querySelectorAll('[data-move]').forEach(btn => {
+    btn.onclick = () => {
+      const i = +btn.dataset.move, dir = +btn.dataset.dir, j = i + dir;
+      if (j < 0 || j >= p.steps.length) return;
+      [p.steps[i], p.steps[j]] = [p.steps[j], p.steps[i]];
+      p.updatedAt = Date.now();
+      save(); renderSteps(p);
+    };
+  });
+  container.querySelectorAll('[data-del-step]').forEach(btn => {
+    btn.onclick = () => {
+      p.steps.splice(+btn.dataset.delStep, 1);
+      p.updatedAt = Date.now();
+      save(); renderSteps(p);
+    };
+  });
+
+  // Render step images
+  (p.steps||[]).forEach((s, i) => renderStepImgs(s, i));
+}
+
+function addStep() {
+  const p = getProc(currentId);
+  if (!p) return;
+  p.steps.push({ title:'', desc:'', type:'操作', images:[] });
+  p.updatedAt = Date.now();
+  save();
+  renderSteps(p);
+  // Focus new step
+  const inputs = document.querySelectorAll('.step-title-input');
+  if (inputs.length) inputs[inputs.length-1].focus();
+}
+
+function syncStepTextareas(p) {
+  document.querySelectorAll('.step-desc-input').forEach(el => {
+    if (p.steps[+el.dataset.si]) p.steps[+el.dataset.si].desc = el.value;
+  });
+  const titleEl = document.getElementById('ed-title');
+  if (titleEl) p.name = titleEl.value;
+  const descEl = document.getElementById('ed-desc');
+  if (descEl) p.description = descEl.value;
+}
+
+function saveProcess() {
+  const p = getProc(currentId);
+  if (!p) return;
+  syncStepTextareas(p);
+  p.updatedAt = Date.now();
+  save();
+  renderSidebar(document.getElementById('search-input').value);
+  notify('✓ 已保存');
+}
+
+// ═══════════════════════════════════════════════
+// VIEW MODE
+// ═══════════════════════════════════════════════
+function renderViewMode(p) {
+  const main = document.getElementById('main-content');
+  const coverImgs = (p.images||[]).map(im =>
+    `<div class="img-thumb" data-lb="${im.id}" data-lb-scope="cover" data-lb-si="-1"><img src="${im.data}" alt=""></div>`
+  ).join('');
+
+  const stepsHtml = (p.steps||[]).length === 0
+    ? '<div style="padding:1rem;text-align:center;color:var(--gray);font-size:0.84rem">暂无步骤</div>'
+    : (p.steps||[]).map((s,i) => {
+        const stepImgs = (s.images||[]).map(im =>
+          `<div class="img-thumb" data-lb="${im.id}" data-lb-scope="step" data-lb-si="${i}"><img src="${im.data}" alt=""></div>`
+        ).join('');
+        return `
+          <div class="view-step">
+            <div class="view-step-line">
+              <div class="view-step-num">${i+1}</div>
+              <div class="view-step-connector"></div>
+            </div>
+            <div class="view-step-body">
+              <div class="view-step-title">${esc(s.title||'（无标题）')}</div>
+              ${s.desc ? `<div class="view-step-desc">${esc(s.desc)}</div>` : ''}
+              ${s.type ? `<span class="view-step-type">${esc(s.type)}</span>` : ''}
+              ${stepImgs ? `<div class="img-grid" style="margin-top:0.45rem">${stepImgs}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+  main.innerHTML = `
+    <div class="process-editor">
+      <div class="editor-header">
+        <div style="min-width:0;flex:1">
+          <h1 style="font-family:'Noto Serif SC',serif;font-size:1.3rem;font-weight:700;word-break:break-word">${esc(p.name||'未命名流程')}</h1>
+          <div class="editor-meta" style="margin-top:0.4rem">
+            <span class="status-badge status-${p.status}">${statusIcon(p.status)} ${statusLabel(p.status)}</span>
+            ${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;gap:0.4rem;flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" id="view-print">🖨</button>
+          <button class="btn btn-primary btn-sm" id="view-edit">✏ 编辑</button>
+        </div>
+      </div>
+
+      ${p.description ? `
+        <div>
+          <div class="section-label">流程说明</div>
+          <div style="font-size:0.85rem;color:var(--gray);line-height:1.7;padding:0.7rem;background:white;border:1px solid var(--border);border-radius:6px;word-break:break-word">${esc(p.description)}</div>
+          ${coverImgs ? `<div class="img-grid" style="margin-top:0.5rem">${coverImgs}</div>` : ''}
+        </div>` : (coverImgs ? `<div><div class="section-label">流程图片</div><div class="img-grid">${coverImgs}</div></div>` : '')}
+
+      <div>
+        <div class="section-label">操作步骤（${(p.steps||[]).length}）</div>
+        <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:0.5rem 1.2rem">
+          <div class="view-steps">${stepsHtml}</div>
+        </div>
+      </div>
+
+      <div style="font-size:0.7rem;color:var(--gray);text-align:right;padding-top:0.5rem">
+        创建 ${new Date(p.createdAt).toLocaleDateString('zh-CN')} · 更新 ${new Date(p.updatedAt).toLocaleDateString('zh-CN')}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('view-edit').onclick = () => { viewMode = false; renderEditor(); };
+  document.getElementById('view-print').onclick = () => window.print();
+
+  // Lightbox for images
+  main.querySelectorAll('.img-thumb').forEach(thumb => {
+    thumb.style.cursor = 'zoom-in';
+    thumb.onclick = () => openLightbox(thumb.dataset.lb, thumb.dataset.lbScope, +thumb.dataset.lbSi);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// IMAGES
+// ═══════════════════════════════════════════════
+document.getElementById('file-img').onchange = function() {
+  if (!imgUploadTarget) return;
+  Array.from(this.files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    compressAndStore(file, imgUploadTarget);
+  });
+  this.value = '';
+};
+
+function compressAndStore(file, target) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w >= h) { h = Math.round(h*MAX/w); w = MAX; }
+        else { w = Math.round(w*MAX/h); h = MAX; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const data = canvas.toDataURL('image/jpeg', 0.78);
+      const im = { id: 'i'+Date.now()+'_'+Math.random().toString(36).slice(2), data };
+      storeImage(im, target);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function storeImage(im, target) {
+  const p = getProc(currentId);
+  if (!p) return;
+  if (target.scope === 'cover') {
+    if (!p.images) p.images = [];
+    p.images.push(im);
+    renderCoverImgs(p);
+  } else if (target.scope === 'step') {
+    const s = p.steps[target.stepIdx];
+    if (!s) return;
+    if (!s.images) s.images = [];
+    s.images.push(im);
+    renderStepImgs(s, target.stepIdx);
+  }
+  p.updatedAt = Date.now();
+  save();
+  notify('🖼 图片已添加');
+}
+
+function renderCoverImgs(p) {
+  const grid = document.getElementById('cover-img-grid');
+  if (!grid) return;
+  grid.innerHTML = (p.images||[]).map(im => `
+    <div class="img-thumb">
+      <img src="${im.data}" alt="">
+      <button class="img-del" data-del-img="${im.id}" data-scope="cover" data-si="-1">✕</button>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.img-thumb img').forEach((img, idx) => {
+    img.onclick = () => openLightbox((p.images||[])[idx].id, 'cover', -1);
+    img.style.cursor = 'zoom-in';
+  });
+  grid.querySelectorAll('.img-del').forEach(btn => {
+    btn.onclick = e => { e.stopPropagation(); deleteImage(btn.dataset.delImg, 'cover', -1); };
+  });
+}
+
+function renderStepImgs(s, stepIdx) {
+  const grid = document.getElementById('step-img-grid-' + stepIdx);
+  if (!grid) return;
+  grid.innerHTML = (s.images||[]).map(im => `
+    <div class="img-thumb">
+      <img src="${im.data}" alt="">
+      <button class="img-del" data-del-img="${im.id}" data-scope="step" data-si="${stepIdx}">✕</button>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.img-thumb img').forEach((img, idx) => {
+    img.onclick = () => openLightbox((s.images||[])[idx].id, 'step', stepIdx);
+    img.style.cursor = 'zoom-in';
+  });
+  grid.querySelectorAll('.img-del').forEach(btn => {
+    btn.onclick = e => { e.stopPropagation(); deleteImage(btn.dataset.delImg, btn.dataset.scope, +btn.dataset.si); };
+  });
+}
+
+function deleteImage(imgId, scope, stepIdx) {
+  const p = getProc(currentId);
+  if (!p) return;
+  if (scope === 'cover') {
+    p.images = (p.images||[]).filter(im => im.id !== imgId);
+    renderCoverImgs(p);
+  } else {
+    const s = p.steps[stepIdx];
+    if (s) s.images = (s.images||[]).filter(im => im.id !== imgId);
+    renderStepImgs(p.steps[stepIdx], stepIdx);
+  }
+  p.updatedAt = Date.now();
+  save();
+}
+
+function openLightbox(imgId, scope, stepIdx) {
+  const p = getProc(currentId);
+  if (!p) return;
+  const imgs = scope === 'cover' ? (p.images||[]) : ((p.steps[stepIdx]||{}).images||[]);
+  const im = imgs.find(x => x.id === imgId);
+  if (!im) return;
+  document.getElementById('lightbox-img').src = im.data;
+  document.getElementById('lightbox').classList.add('open');
+}
+
+document.getElementById('lightbox-close').onclick = () => {
+  document.getElementById('lightbox').classList.remove('open');
+};
+document.getElementById('lightbox').onclick = e => {
+  if (e.target === e.currentTarget) document.getElementById('lightbox').classList.remove('open');
+};
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('open');
+});
+
+// ═══════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(processes, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'work-processes-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  notify('📤 导出成功');
+}
+
+document.getElementById('file-import').onchange = function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw new Error('格式错误');
+      if (!confirm(`导入 ${data.length} 个流程？（将合并到现有数据，不会覆盖）`)) return;
+      const ids = new Set(processes.map(p => p.id));
+      let added = 0;
+      data.forEach(p => { if (!ids.has(p.id)) { processes.push(p); added++; } });
+      save();
+      renderSidebar(document.getElementById('search-input').value);
+      notify(`✓ 导入了 ${added} 个流程`);
+    } catch { alert('文件格式不正确，请选择有效的 JSON 备份文件'); }
+  };
+  reader.readAsText(file);
+  this.value = '';
+};
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+renderSidebar('');
+</script>
+</body>
+</html>
